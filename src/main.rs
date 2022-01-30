@@ -20,6 +20,37 @@ impl Brainfuck {
         }
     }
 
+    fn optimize(&mut self) {
+        let mut i = 0;
+
+        // convert multiple statements of the same type into one
+        while i < self.instructions.len() - 1 {
+            if let (Instruction::Inc(n1), Instruction::Inc(n2)) =
+                (&self.instructions[i], &self.instructions[i + 1])
+            {
+                self.instructions[i] = Instruction::Inc(n1 + n2);
+                self.instructions.remove(i + 1);
+            } else if let (Instruction::Dec(n1), Instruction::Dec(n2)) =
+                (&self.instructions[i], &self.instructions[i + 1])
+            {
+                self.instructions[i] = Instruction::Dec(n1 + n2);
+                self.instructions.remove(i + 1);
+            } else if let (Instruction::Right(n1), Instruction::Right(n2)) =
+                (&self.instructions[i], &self.instructions[i + 1])
+            {
+                self.instructions[i] = Instruction::Right(n1 + n2);
+                self.instructions.remove(i + 1);
+            } else if let (Instruction::Left(n1), Instruction::Left(n2)) =
+                (&self.instructions[i], &self.instructions[i + 1])
+            {
+                self.instructions[i] = Instruction::Left(n1 + n2);
+                self.instructions.remove(i + 1);
+            }
+
+            i += 1;
+        }
+    }
+
     fn execute(&mut self) {
         while self.ins_ptr != self.instructions.len() {
             // step through every instruction and print self
@@ -30,16 +61,16 @@ impl Brainfuck {
             // let _ = std::io::stdin().bytes().next();
 
             match self.instructions[self.ins_ptr] {
-                Instruction::Inc => self.memory[self.mem_ptr] += Wrapping(1),
-                Instruction::Dec => self.memory[self.mem_ptr] -= Wrapping(1),
-                Instruction::Right => {
-                    self.mem_ptr += 1;
+                Instruction::Inc(n) => self.memory[self.mem_ptr] += Wrapping(n as u8),
+                Instruction::Dec(n) => self.memory[self.mem_ptr] -= Wrapping(n as u8),
+                Instruction::Right(n) => {
+                    self.mem_ptr += n;
 
-                    if self.mem_ptr == self.memory.len() {
+                    while self.mem_ptr >= self.memory.len() {
                         self.memory.push(Wrapping(0));
                     }
                 }
-                Instruction::Left => self.mem_ptr -= 1,
+                Instruction::Left(n) => self.mem_ptr -= n,
                 Instruction::Open => {
                     if self.memory[self.mem_ptr] == Wrapping(0) {
                         let mut counter = 1;
@@ -94,10 +125,10 @@ impl Brainfuck {
 
 #[derive(Debug, PartialEq)]
 enum Instruction {
-    Inc,
-    Dec,
-    Right,
-    Left,
+    Inc(usize),
+    Dec(usize),
+    Right(usize),
+    Left(usize),
     Open,
     Close,
     Dot,
@@ -121,10 +152,10 @@ impl Instruction {
 
     fn get_instruction(c: char) -> Option<Instruction> {
         match c {
-            '+' => Some(Instruction::Inc),
-            '-' => Some(Instruction::Dec),
-            '>' => Some(Instruction::Right),
-            '<' => Some(Instruction::Left),
+            '+' => Some(Instruction::Inc(1)),
+            '-' => Some(Instruction::Dec(1)),
+            '>' => Some(Instruction::Right(1)),
+            '<' => Some(Instruction::Left(1)),
             '[' => Some(Instruction::Open),
             ']' => Some(Instruction::Close),
             '.' => Some(Instruction::Dot),
@@ -145,6 +176,7 @@ fn main() {
     let instructions = Instruction::from_file(&args[1]);
 
     let mut bf = Brainfuck::new(instructions);
+    bf.optimize();
 
     let now = Instant::now();
 

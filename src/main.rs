@@ -120,7 +120,7 @@ fn main() {
                                                         .bytes() 
                                                         .next()
                                                         .and_then(|result| result.ok())
-                                                        .map(|byte| Wrapping::<u8>(byte))
+                                                        .map(Wrapping::<u8>)
                                                         .unwrap();
             }
         }; 

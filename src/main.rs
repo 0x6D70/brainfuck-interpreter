@@ -45,9 +45,9 @@ impl Brainfuck {
             {
                 self.instructions[i] = Instruction::Left(n1 + n2);
                 self.instructions.remove(i + 1);
+            } else {
+                i += 1;
             }
-
-            i += 1;
         }
     }
 

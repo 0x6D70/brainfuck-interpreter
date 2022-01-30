@@ -62,14 +62,13 @@ fn main() {
 
     while state.ins_ptr != state.instructions.len() {
 
-        //println!("ins_ptr = {} {:?}", state.ins_ptr, state.instructions[state.ins_ptr]);
-        if false {
-            println!("======================================================");
-            println!("{:?}", state.instructions[state.ins_ptr]);
-            println!("{:?}", state);
-            println!("======================================================");
-            let _ = std::io::stdin().bytes().next();
-        }
+        // step through every instruction and print state
+        // println!("======================================================");
+        // println!("{:?}", state.instructions[state.ins_ptr]);
+        // println!("{:?}", state);
+        // println!("======================================================");
+        // let _ = std::io::stdin().bytes().next();
+        
         match state.instructions[state.ins_ptr] {
             Instruction::Inc => state.memory[state.mem_ptr] += Wrapping(1),
             Instruction::Dec => state.memory[state.mem_ptr] -= Wrapping(1),

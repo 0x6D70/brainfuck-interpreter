@@ -2,6 +2,10 @@ use std::io::Read;
 use std::num::Wrapping;
 use std::time::Instant;
 
+fn rdtsc() -> u64 {
+    unsafe { core::arch::x86_64::_rdtsc() }
+}
+
 #[derive(Debug)]
 struct Brainfuck {
     instructions: Vec<Instruction>,
@@ -14,7 +18,7 @@ impl Brainfuck {
     fn new(instructions: Vec<Instruction>) -> Self {
         Brainfuck {
             instructions,
-            memory: vec![Wrapping(0)],
+            memory: vec![Wrapping(0); 30000],
             ins_ptr: 0,
             mem_ptr: 0,
         }
@@ -51,8 +55,54 @@ impl Brainfuck {
         }
     }
 
+    fn set_matching_paren(&mut self) {
+        // set matching paren of close and open instructions
+
+        let mut i = 0;
+        while i < self.instructions.len() {
+            if matches!(self.instructions[i], Instruction::Open(_)) {
+                let mut counter = 1;
+                let mut index = i;
+
+                while !matches!(self.instructions[index], Instruction::Close(_)) || counter != 0 {
+                    index += 1;
+
+                    if matches!(self.instructions[index], Instruction::Open(_)) {
+                        counter += 1;
+                    } else if matches!(self.instructions[index], Instruction::Close(_)) {
+                        counter -= 1;
+                    }
+                }
+
+                self.instructions[i] = Instruction::Open(index);
+            } else if matches!(self.instructions[i], Instruction::Close(_)) {
+                let mut counter = 1;
+                let mut index = i;
+
+                while !matches!(self.instructions[index], Instruction::Open(_)) || counter != 0 {
+                    index -= 1;
+
+                    if matches!(self.instructions[index], Instruction::Open(_)) {
+                        counter -= 1;
+                    } else if matches!(self.instructions[index], Instruction::Close(_)) {
+                        counter += 1;
+                    }
+                }
+
+                self.instructions[i] = Instruction::Close(index);
+            }
+
+            i += 1;
+        }
+    }
+
     fn execute(&mut self) {
+        let mut ins_count = 0 as usize;
+
+        let cycle_start = rdtsc();
+
         while self.ins_ptr != self.instructions.len() {
+            ins_count += 1;
             // step through every instruction and print self
             // println!("======================================================");
             // println!("{:?}", self.instructions[self.ins_ptr]);
@@ -71,38 +121,14 @@ impl Brainfuck {
                     }
                 }
                 Instruction::Left(n) => self.mem_ptr -= n,
-                Instruction::Open => {
+                Instruction::Open(index) => {
                     if self.memory[self.mem_ptr] == Wrapping(0) {
-                        let mut counter = 1;
-
-                        while self.instructions[self.ins_ptr] != Instruction::Close || counter != 0
-                        {
-                            self.ins_ptr += 1;
-
-                            if self.instructions[self.ins_ptr] == Instruction::Open {
-                                counter += 1;
-                            } else if self.instructions[self.ins_ptr] == Instruction::Close {
-                                counter -= 1;
-                            }
-                        }
+                        self.ins_ptr = index;
                     }
                 }
-                Instruction::Close => {
+                Instruction::Close(index) => {
                     if self.memory[self.mem_ptr] != Wrapping(0) {
-                        let mut counter = 1;
-
-                        while self.instructions[self.ins_ptr] != Instruction::Open || counter != 0 {
-                            self.ins_ptr -= 1;
-
-                            if self.instructions[self.ins_ptr] == Instruction::Open {
-                                counter -= 1;
-                            } else if self.instructions[self.ins_ptr] == Instruction::Close {
-                                counter += 1;
-                            }
-                        }
-                    } else {
-                        self.ins_ptr += 1;
-                        continue;
+                        self.ins_ptr = index;
                     }
                 }
                 Instruction::Dot => print!("{}", self.memory[self.mem_ptr].0 as char),
@@ -116,10 +142,17 @@ impl Brainfuck {
                 }
             };
 
-            if self.instructions[self.ins_ptr] != Instruction::Close {
-                self.ins_ptr += 1;
-            }
+            self.ins_ptr += 1;
         }
+
+        let cycle_end = rdtsc();
+
+        println!("number of instructions executed: {}", ins_count);
+        println!("number of cycles: {}", (cycle_end - cycle_start));
+        println!(
+            "{} cycles / instruction",
+            (cycle_end - cycle_start) as f64 / (ins_count as f64)
+        );
     }
 }
 
@@ -129,8 +162,8 @@ enum Instruction {
     Dec(usize),
     Right(usize),
     Left(usize),
-    Open,
-    Close,
+    Open(usize),
+    Close(usize),
     Dot,
     Comma,
 }
@@ -156,8 +189,8 @@ impl Instruction {
             '-' => Some(Instruction::Dec(1)),
             '>' => Some(Instruction::Right(1)),
             '<' => Some(Instruction::Left(1)),
-            '[' => Some(Instruction::Open),
-            ']' => Some(Instruction::Close),
+            '[' => Some(Instruction::Open(0)),
+            ']' => Some(Instruction::Close(0)),
             '.' => Some(Instruction::Dot),
             ',' => Some(Instruction::Comma),
             _ => None,
@@ -177,6 +210,7 @@ fn main() {
 
     let mut bf = Brainfuck::new(instructions);
     bf.optimize();
+    bf.set_matching_paren();
 
     let now = Instant::now();
 

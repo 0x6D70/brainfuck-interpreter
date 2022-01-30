@@ -97,7 +97,7 @@ impl Brainfuck {
     }
 
     fn execute(&mut self) {
-        let mut ins_count = 0 as usize;
+        let mut ins_count = 0_usize;
 
         let cycle_start = rdtsc();
 

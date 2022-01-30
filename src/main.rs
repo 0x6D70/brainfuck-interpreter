@@ -4,7 +4,7 @@ use std::num::Wrapping;
 #[derive(Debug)]
 struct BrainfuckState {
     instructions: Vec<Instruction>,
-    memory: Vec<u8>,
+    memory: Vec<Wrapping<u8>>,
     ins_ptr: usize,
     mem_ptr: usize
 }
@@ -55,7 +55,7 @@ fn main() {
 
     let mut state = BrainfuckState {
         instructions,
-        memory: vec![0],
+        memory: vec![Wrapping(0)],
         ins_ptr: 0,
         mem_ptr: 0
     };
@@ -71,18 +71,18 @@ fn main() {
             let _ = std::io::stdin().bytes().next();
         }
         match state.instructions[state.ins_ptr] {
-            Instruction::Inc => state.memory[state.mem_ptr] += 1,
-            Instruction::Dec => state.memory[state.mem_ptr] -= 1,
+            Instruction::Inc => state.memory[state.mem_ptr] += Wrapping(1),
+            Instruction::Dec => state.memory[state.mem_ptr] -= Wrapping(1),
             Instruction::Right => {
                 state.mem_ptr += 1;
 
                 if state.mem_ptr == state.memory.len() {
-                    state.memory.push(0);
+                    state.memory.push(Wrapping(0));
                 }
             },
             Instruction::Left => state.mem_ptr -= 1,
             Instruction::Open => {
-                if state.memory[state.mem_ptr] == 0 {
+                if state.memory[state.mem_ptr] == Wrapping(0) {
                     let mut counter = 1;
 
                     while state.instructions[state.ins_ptr] != Instruction::Close || counter != 0 {
@@ -97,7 +97,7 @@ fn main() {
                 }
             },
             Instruction::Close => {
-                if state.memory[state.mem_ptr] != 0 {
+                if state.memory[state.mem_ptr] != Wrapping(0) {
                     let mut counter = 1;
 
                     while state.instructions[state.ins_ptr] != Instruction::Open || counter != 0 {
@@ -114,13 +114,13 @@ fn main() {
                     continue;
                 } 
             },
-            Instruction::Dot => print!("{}", (state.memory[state.mem_ptr] % 128) as char),
+            Instruction::Dot => print!("{}", state.memory[state.mem_ptr].0 as char),
             Instruction::Comma => {
                 state.memory[state.mem_ptr] = std::io::stdin()
                                                         .bytes() 
                                                         .next()
                                                         .and_then(|result| result.ok())
-                                                        .map(|byte| byte as u8)
+                                                        .map(|byte| Wrapping::<u8>(byte))
                                                         .unwrap();
             }
         }; 

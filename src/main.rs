@@ -116,8 +116,8 @@ impl Brainfuck {
                 Instruction::Right(n) => {
                     self.mem_ptr += n;
 
-                    while self.mem_ptr >= self.memory.len() {
-                        self.memory.push(Wrapping(0));
+                    if self.mem_ptr > self.memory.len() {
+                        self.memory.resize(self.mem_ptr + 1024, Wrapping(0));
                     }
                 }
                 Instruction::Left(n) => self.mem_ptr -= n,

@@ -53,6 +53,22 @@ impl Brainfuck {
                 i += 1;
             }
         }
+
+        i = 0;
+
+        while i < self.instructions.len() - 2 {
+            if matches!(self.instructions[i], Instruction::Open(_))
+                && (matches!(self.instructions[i + 1], Instruction::Dec(_))
+                    || matches!(self.instructions[i + 1], Instruction::Inc(_)))
+                && matches!(self.instructions[i + 2], Instruction::Close(_))
+            {
+                self.instructions[i] = Instruction::ZeroCell;
+                self.instructions.remove(i + 1);
+                self.instructions.remove(i + 1);
+            }
+
+            i += 1;
+        }
     }
 
     fn set_matching_paren(&mut self) {
@@ -140,6 +156,7 @@ impl Brainfuck {
                         .map(Wrapping::<u8>)
                         .unwrap();
                 }
+                Instruction::ZeroCell => self.memory[self.mem_ptr] = Wrapping(0),
             };
 
             self.ins_ptr += 1;
@@ -166,6 +183,7 @@ enum Instruction {
     Close(usize),
     Dot,
     Comma,
+    ZeroCell,
 }
 
 impl Instruction {

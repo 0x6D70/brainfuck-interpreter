@@ -158,8 +158,8 @@ impl Brainfuck {
 
 #[derive(Debug, PartialEq)]
 enum Instruction {
-    Inc(usize),
-    Dec(usize),
+    Inc(u8),
+    Dec(u8),
     Right(usize),
     Left(usize),
     Open(usize),

@@ -1,9 +1,21 @@
 # A Brainfuck interpreter written in Rust
 
-To run the mandelbrot program execute:
-```bash
-cargo run --release -- ./test_files/mandelbrot.b
+### Building and Running
+For building you simply need to run
+```
+cargo build
 ```
 
-Ideas:
- * optimize -> example convert ++ to Instruction::Inc(2), goal: execute mandelbrot.b in 1s
+Running a program requires the following command
+```bash
+cargo run --release -- /path/to/file.b
+```
+
+In `test_files` some test programs are already provided
+
+### Ideas:
+ - optimize 
+   - convert ++ to Instruction::Inc(2)
+
+### Goals
+ -  execute mandelbrot.b in 1s
